@@ -111,10 +111,9 @@ namespace CocheraTp.Repository.CarpetaRepositoryFactura.Implementacion
                         cmdDetalle.Parameters.AddWithValue("@fecha_salida", detalle.fecha_salida);
                         cmdDetalle.Parameters.AddWithValue("@id_vehiculo", detalle.id_vehiculo);
                         cmdDetalle.Parameters.AddWithValue("@id_lugar", detalle.id_lugar);
-                        //cmdDetalle.Parameters.AddWithValue("@id_abono", detalle.id_abono);
                         cmdDetalle.Parameters.AddWithValue("@id_abono", detalle.id_abono == null ? DBNull.Value : detalle.id_abono);
-                        cmdDetalle.Parameters.AddWithValue("@descuento", detalle.descuento);
-                        cmdDetalle.Parameters.AddWithValue("@recargo", detalle.recargo);
+                        cmdDetalle.Parameters.AddWithValue("@descuento", detalle.descuento == null ? DBNull.Value : detalle.descuento);
+                        cmdDetalle.Parameters.AddWithValue("@recargo", detalle.recargo == null ? DBNull.Value : detalle.recargo);
                         cmdDetalle.Parameters.AddWithValue("@precio", detalle.precio);
                         cmdDetalle.ExecuteNonQuery();
                     }

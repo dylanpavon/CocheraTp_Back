@@ -5,6 +5,10 @@ using CocheraTp.Models;
 using CocheraTp.Servicios.UsuarioServicio;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ApiCocheras.Controllers
 {
@@ -13,10 +17,12 @@ namespace ApiCocheras.Controllers
     public class UsuarioController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;
+        private readonly IConfiguration _configuration;
 
-        public UsuarioController(IUsuarioService usuarioService)
+        public UsuarioController(IUsuarioService usuarioService, IConfiguration configuration)
         {
             _usuarioService = usuarioService;
+            _configuration = configuration;
         }
 
         [HttpPost("PostLogin")]
@@ -25,31 +31,58 @@ namespace ApiCocheras.Controllers
             ResultBase resultBase = new ResultBase();
             try
             {
-
-                if ((frmUsuario.usuario1 == null || frmUsuario.usuario1 == "") || (frmUsuario.contrasenia == null || frmUsuario.contrasenia == ""))
+                if (!EsUsuarioValido(frmUsuario))
                 {
                     resultBase.Ok = false;
                     resultBase.StatusCode = 400;
                     resultBase.Message = "El usuario o contraseña son requeridos.";
-
                     return resultBase;
                 }
-                else
+
+                // Autenticación del usuario
+                resultBase = await _usuarioService.GetAllUsuario(frmUsuario);
+
+                if (!resultBase.Ok)
                 {
-                    resultBase = await _usuarioService.GetAllUsuario(frmUsuario); // aca se le asigna a resultBase 
+                    // Credenciales incorrectas
+                    resultBase.StatusCode = 401;  // Código HTTP 401 para autenticación fallida
+                    resultBase.Message = "Usuario o contraseña incorrectos.";
                     return resultBase;
                 }
 
+                // Generar token si las credenciales son válidas
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = _configuration["AppSettings:Token"];
+                var keyBytes = Encoding.UTF8.GetBytes(key);
+
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(new Claim[]
+                    {
+                new Claim(ClaimTypes.Name, frmUsuario.usuario1)
+                    }),
+                    Expires = DateTime.UtcNow.AddHours(1),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256Signature)
+                };
+
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                resultBase.Token = tokenHandler.WriteToken(token);
+
+                return resultBase;
             }
             catch (Exception ex)
             {
                 resultBase.Ok = false;
-                resultBase.StatusCode = 400;
-                resultBase.Message = "Algo ocurrio en el servidor.";
-
+                resultBase.StatusCode = 500;
+                resultBase.Message = $"Error en el servidor: {ex.Message}";
                 return resultBase;
             }
         }
+        private bool EsUsuarioValido(DtoFrmLogin frmUsuario)
+        {
+            return !(string.IsNullOrEmpty(frmUsuario.usuario1) || string.IsNullOrEmpty(frmUsuario.contrasenia));
+        }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUsuario(int id, USUARIO usuario)
