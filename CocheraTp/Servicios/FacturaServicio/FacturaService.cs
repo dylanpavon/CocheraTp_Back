@@ -18,6 +18,11 @@ namespace CocheraTp.Servicios.FacturaServicio
             _unitOfWork = unitOfWork;
         }
 
+        public async Task<List<Dictionary<string, object>>> GetAllSP()
+        {
+            return await _unitOfWork.FacturaRepository.GetAllSP();
+        }
+
         public async Task<bool?> CreateFactura(FACTURA? f)
         {
             var agregado = await _unitOfWork.FacturaRepository.Create(f);

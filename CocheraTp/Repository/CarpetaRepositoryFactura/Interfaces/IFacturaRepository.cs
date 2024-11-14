@@ -11,6 +11,7 @@ namespace CocheraTp.Repository.CarpetaRepositoryFactura.Interfaces
     public interface IFacturaRepository
     {
         Task<List<FACTURA?>> GetAll();
+        Task<List<Dictionary<string, object>>> GetAllSP();
         Task<FACTURA?> GetById(int id);
         Task<FACTURA?> GetFacturaByPatente(string patente);
         Task<bool?> Create(FACTURA? factura);

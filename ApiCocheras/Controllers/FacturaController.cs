@@ -28,6 +28,12 @@ namespace ApiFactura.Controllers
             return await _serviceF.GetAllFacturas();
         }
 
+        [HttpGet("WithStoreProcedure")]
+        public async Task<ActionResult<List<Dictionary<string, object>>>> GetFacturasSP()
+        {
+            return await _serviceF.GetAllSP();
+        }
+
         [HttpGet("by-dni/{dni}")]
         public async Task<ActionResult<FACTURA>> GetFacturaByDni(string dni)
         {

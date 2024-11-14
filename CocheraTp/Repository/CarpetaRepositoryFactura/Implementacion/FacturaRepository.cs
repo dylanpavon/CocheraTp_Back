@@ -26,6 +26,56 @@ namespace CocheraTp.Repository.CarpetaRepositoryFactura.Implementacion
             _connection = new SqlConnection("Data Source=DESKTOP-8KIAG7T;Initial Catalog=db_cocheras_final;Integrated Security=True;Trust Server Certificate=True");
         }
 
+        public async Task<List<Dictionary<string, object>>> GetAllSP()
+        {
+            var result = new List<Dictionary<string, object>>();
+
+            try
+            {
+                string query = "SP_JOIN_FACTURAS";
+                using (var cmd = new SqlCommand(query, _connection))
+                {
+                    cmd.CommandType = System.Data.CommandType.StoredProcedure;
+
+                    // Abrimos la conexión
+                    if (_connection.State == System.Data.ConnectionState.Closed)
+                        await _connection.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var row = new Dictionary<string, object>();
+
+                            // Iterar sobre cada columna de la fila y agregar al diccionario
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                string columnName = reader.GetName(i);
+                                object columnValue = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                                row.Add(columnName, columnValue);
+                            }
+
+                            // Agregar la fila al resultado
+                            result.Add(row);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores o log
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                // Asegurarse de cerrar la conexión
+                if (_connection.State == System.Data.ConnectionState.Open)
+                    await _connection.CloseAsync();
+            }
+
+            return result;
+        }
+
 
         public async Task<List<FACTURA?>> GetAll()
         {
@@ -139,66 +189,6 @@ namespace CocheraTp.Repository.CarpetaRepositoryFactura.Implementacion
             return result;
         }
 
-        /*public async Task<bool?> Create(FACTURA factura)
-        {
-            factura.fecha = DateTime.Now;
-
-            var detalle = factura.DETALLE_FACTURAs.First();
-
-
-            detalle.id_factura = factura.id_factura;
-            detalle.fecha_entrada = DateTime.Now;
-            detalle.fecha_salida = DateTime.Now;
-
-            detalle.descuento = (detalle.descuento ?? 0) / 100m;
-            decimal? descuento = detalle.descuento > 0 ? detalle.descuento : 1;
-            decimal recargo = detalle.recargo ?? 0;
-
-            if (detalle.id_abono != 1 && detalle.id_abono != 2 && detalle.id_abono != 3)
-            {
-                return false;
-            }
-
-            switch (detalle.id_abono)
-            {
-                case 1:
-                    detalle.precio = 40000;
-                    break;
-                case 2:
-                    detalle.precio = 25000;
-                    break;
-                case 3:
-                    detalle.precio = 15000;
-                    break;
-            }
-
-            if (detalle.id_vehiculoNavigation.id_tipo_vehiculoNavigation.descripcion != "Motocicleta" &&
-                detalle.id_vehiculoNavigation.id_tipo_vehiculoNavigation.descripcion != "Automovil" &&
-                detalle.id_vehiculoNavigation.id_tipo_vehiculoNavigation.descripcion != "Camioneta")
-            {
-                return false;
-            }
-
-            switch (detalle.id_vehiculoNavigation.id_tipo_vehiculoNavigation.descripcion)
-            {
-                case "Motocicleta":
-                    detalle.precio -= 15000;
-                    break;
-                case "Automovil":
-                    break;
-                case "Camioneta":
-                    detalle.precio += 10000;
-                    break;
-            }
-
-            detalle.precio = (detalle.precio * (1 - descuento)) + recargo;
-
-            var facturaCreada = await _context.FACTURAs.AddAsync(factura);
-
-            if (facturaCreada != null)
-                return true;
-            return false;
-        }*/
 
         public async Task<bool> DeleteById(int id)
         {
